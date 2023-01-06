@@ -65,21 +65,35 @@ void setup()
     tft.println("Serial connected");
 
     tft.println("\nInitializing buttons...");
-    int oldCursor[2] = {tft.getCursorX(), tft.getCursorY()};
+    save_cursor_pos();
 
     mic_btn.init();
     head_btn.init();
     connected_btn.init();
 
     tft.setTextColor(WHITE);
-    tft.setCursor(oldCursor[0], oldCursor[1]);
+    revert_cursor_pos();
     tft.setTextSize(1);
     tft.println("Buttons initialized\n");
 
     tft.setTextColor(WHITE);
     tft.print("Waiting for py script");
-    saved_cursor[0] = tft.getCursorX();
-    saved_cursor[1] = tft.getCursorY();
+    save_cursor_pos();
+}
+
+void save_cursor_pos() {
+  saved_cursor[0] = tft.getCursorX();
+  saved_cursor[1] = tft.getCursorY();
+}
+
+void revert_cursor_pos() {
+  tft.setCursor(saved_cursor[0], saved_cursor[1]);
+}
+
+void revert_cursor() {
+  revert_cursor_pos();
+  tft.setTextSize(1);
+  tft.setTextColor(WHITE);
 }
 
 Adafruit_GFX_Button *buttons[] = {mic_btn.getBtn(), head_btn.getBtn(), connected_btn.getBtn(), NULL};
@@ -107,11 +121,11 @@ void loop()
 {
     while (!py_connected) {
       if (not_connected_count < 3) {
-        tft.setCursor(saved_cursor[0], saved_cursor[1]);
+        revert_cursor_pos();
         tft.print(not_connected_dots[not_connected_count]);
         not_connected_count++;
       } else {
-        tft.setCursor(saved_cursor[0], saved_cursor[1]);
+        revert_cursor_pos();
         tft.setTextColor(BLACK);
         tft.print(not_connected_dots[2]);
         tft.setTextColor(WHITE);
@@ -139,8 +153,7 @@ void loop()
               } else {
                 tft.println("\nPy script disconnected");
                 tft.print("Waiting for py script");
-                saved_cursor[0] = tft.getCursorX();
-                saved_cursor[1] = tft.getCursorY();
+                save_cursor_pos();
                 py_connected = false;
               }
               break;
@@ -154,62 +167,47 @@ void loop()
                 tft.println("\nDsicord disconnected");
                 tft.println("\nWaiting for Discord...");
 
-                saved_cursor[0] = tft.getCursorX();
-                saved_cursor[1] = tft.getCursorY();
+                save_cursor_pos();
 
                 mic_btn.disable();
                 head_btn.disable();
                 connected_btn.disable();
 
-                tft.setCursor(saved_cursor[0], saved_cursor[1]);
-                tft.setTextSize(1);
-                tft.setTextColor(WHITE);
+                revert_cursor();
               }
               break;
             case COMMAND_SYN:
-              saved_cursor[0] = tft.getCursorX();
-              saved_cursor[1] = tft.getCursorY();
+              save_cursor_pos();
 
               mic_btn.setState(buffer[2] - '0');
               head_btn.setState(buffer[3] - '0');
               connected_btn.setState(buffer[4] - '0');
 
-              tft.setCursor(saved_cursor[0], saved_cursor[1]);
-              tft.setTextSize(1);
-              tft.setTextColor(WHITE);
+              revert_cursor();
               break;
             case COMMAND_VOICE_STATE_UPDATES:
-              saved_cursor[0] = tft.getCursorX();
-              saved_cursor[1] = tft.getCursorY();
+              save_cursor_pos();
 
               mic_btn.setState(buffer[2] - '0');
               head_btn.setState(buffer[3] - '0');
               connected_btn.setState(buffer[4] - '0');
 
-              tft.setCursor(saved_cursor[0], saved_cursor[1]);
-              tft.setTextSize(1);
-              tft.setTextColor(WHITE);
+              revert_cursor();
               break;
             case COMMAND_AUDIO_TOGGLE:
-              saved_cursor[0] = tft.getCursorX();
-              saved_cursor[1] = tft.getCursorY();
+              save_cursor_pos();
 
               mic_btn.setState(buffer[2] - '0');
               head_btn.setState(buffer[3] - '0');
 
-              tft.setCursor(saved_cursor[0], saved_cursor[1]);
-              tft.setTextSize(1);
-              tft.setTextColor(WHITE);
+              revert_cursor();
               break;
             case COMMAND_CONNECTED:
-              saved_cursor[0] = tft.getCursorX();
-              saved_cursor[1] = tft.getCursorY();
+              save_cursor_pos();
 
               connected_btn.setState(buffer[2] - '0');
 
-              tft.setCursor(saved_cursor[0], saved_cursor[1]);
-              tft.setTextSize(1);
-              tft.setTextColor(WHITE);
+              revert_cursor();
               break;
             default:
               break;

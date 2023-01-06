@@ -1,12 +1,22 @@
 # Arduino-Discord-Controller
 
-<img src="https://user-images.githubusercontent.com/99439005/211055978-7c768534-915b-4ee5-8f82-d27e4d3f078e.mp4" width="10">
+https://user-images.githubusercontent.com/99439005/211055978-7c768534-915b-4ee5-8f82-d27e4d3f078e.mp4
 
 Controlling Discord using a combination of Arduino, BetterDiscord, and Python.
+
+## Features
+
+- [x] Mute
+- [x] Deafen
+- [x] Disconnect from voice channel
+- [x] Arduino reacts to Discord changes
+- [ ] See users in voice channel
 
 ## How to use
 
 See [INSTRUCTIONS.md](./INSTRUCTIONS.md) for set-up.
+
+> TECH TIP: If doing dev, create a symlink for the betterdiscord plugin.
 
 ## TODO
 
