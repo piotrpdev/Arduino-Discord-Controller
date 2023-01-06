@@ -1,6 +1,6 @@
 # Arduino-Discord-Controller
 
-![Showcase video](./.github/showcase.mp4)
+<img src="https://user-images.githubusercontent.com/99439005/211055978-7c768534-915b-4ee5-8f82-d27e4d3f078e.mp4" width="10">
 
 Controlling Discord using a combination of Arduino, BetterDiscord, and Python.
 
