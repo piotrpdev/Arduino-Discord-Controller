@@ -28,6 +28,7 @@ You should be good to go, move onto setting up the Python script.
 
 * Activate venv and install deps.
   * Go into the [script folder](./Python%20Script/).
+  * `python -m venv venv`
   * `venv\Scripts\activate`
   * `pip install -r requirements.txt`
   

@@ -21,7 +21,7 @@ public:
   revert_cursor_pos();
   revert_cursor();
   dotLoop(bool* condition, int delayAmount, bool boot = false);
-  char* dots[3] = { ".", "..", "..." }; 
+  const char* dots[3] = { ".", "..", "..." }; 
 private:
   MCUFRIEND_kbv* _tft;
   int _saved_cursor[2];
