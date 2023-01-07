@@ -9,6 +9,7 @@ Controlling Discord using a combination of Arduino, BetterDiscord, and Python.
 - [x] Mute
 - [x] Deafen
 - [x] Disconnect from voice channel
+- [x] Display time spent in voice channel
 - [x] Arduino reacts to Discord changes
 - [ ] See users in voice channel
 
@@ -32,9 +33,9 @@ See [INSTRUCTIONS.md](./INSTRUCTIONS.md) for set-up.
 
 ### Arduino Sketch
 
-- [ ] Cleaner way of resetting text settings
-- [ ] Dot loading animation
+- [x] Cleaner way of resetting text settings
+- [x] Dot loading animation
 - [ ] Display how to use initially
 - [ ] Add welcome message or something
 - [ ] Mess around with timeout and baud for speed
-- [ ] Handle text overflow
+- [x] Handle text overflow

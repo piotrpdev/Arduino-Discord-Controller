@@ -20,6 +20,7 @@ public:
   save_cursor_pos();
   revert_cursor_pos();
   revert_cursor();
+  fillRect_safe(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
   dotLoop(bool* condition, int delayAmount, bool boot = false);
   const char* dots[3] = { ".", "..", "..." }; 
 private:

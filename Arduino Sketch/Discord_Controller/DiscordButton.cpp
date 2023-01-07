@@ -1,5 +1,5 @@
 #include "DiscordButton.h"
-#include "DiscordSerial.h"
+#include "Serial.h"
 
 #include "Arduino.h"
 #include <Adafruit_GFX.h>
@@ -34,22 +34,22 @@ DiscordButton::enable() {
 
 DiscordButton::disable() {
   _disabled = true;
-  _c->save_cursor_pos();
-  _tft->fillRect(160, _rectY, BTN_W, BTN_W, YELLOW);
-  _c->revert_cursor();
+  _c->fillRect_safe(160, _rectY, BTN_W, BTN_W, YELLOW);
+}
+
+bool DiscordButton::getState() {
+  return _state;
 }
 
 DiscordButton::setState(bool state) {
   if (_disabled) _disabled = false;
   _state = state;
 
-  _c->save_cursor_pos();
   if (state) {
-    _tft->fillRect(160, _rectY, BTN_W, BTN_W, GREEN);
+    _c->fillRect_safe(160, _rectY, BTN_W, BTN_W, GREEN);
   } else {
-    _tft->fillRect(160, _rectY, BTN_W, BTN_W, RED);
+    _c->fillRect_safe(160, _rectY, BTN_W, BTN_W, RED);
   }
-  _c->revert_cursor();
 }
 
 DiscordButton::issueCommand(char type, bool state) {

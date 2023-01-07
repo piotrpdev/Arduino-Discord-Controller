@@ -14,6 +14,7 @@ public:
   Adafruit_GFX_Button* getBtn();
   init();
   toggle();
+  bool getState();
   setState(bool state);
   on();
   off();

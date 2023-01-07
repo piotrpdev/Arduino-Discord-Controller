@@ -5,6 +5,7 @@ MCUFRIEND_kbv tft;
 #include "CursorUtils.h"
 #include "Serial.h"
 #include "DiscordButton.h"
+#include "DiscordStats.h"
 
 #define MINPRESSURE 200
 #define MAXPRESSURE 1000
@@ -23,6 +24,11 @@ char buffer[10];
 DiscordButton mic_btn(&tft, &c, 280, 2 + BTN_W * 0.5, 2 + 0, "MIC", COMMAND_MIC);
 DiscordButton head_btn(&tft, &c, 280, 6 + BTN_W * 1.5, 6 + BTN_W * 1, "HEAD", COMMAND_HEAD);
 DiscordButton connected_btn(&tft, &c, 280, 10 + BTN_W * 2.5, 10 + BTN_W * 2, "CONN", COMMAND_CONNECTED);
+
+DiscordStats stats(&tft, &c);
+bool timer_enabled = false;
+
+int discord_cursor[2] = {0, 0};
 
 int pixel_x, pixel_y;     //Touch_getXY() updates global vars
 
@@ -68,6 +74,8 @@ void setup()
     head_btn.init();
     connected_btn.init();
 
+    stats.init();
+
     tft.println("Buttons initialized");
 }
 
@@ -106,11 +114,17 @@ void wait_for_py() {
 bool discord_connected = false;
 
 void wait_for_discord() {
+  if (discord_cursor[1] == 0) {
+    discord_cursor[0] = tft.getCursorX();
+    discord_cursor[1] = tft.getCursorY();
+  } 
   tft.print("\nWaiting for Discord");
   c.save_cursor_pos();
 
   c.dotLoop(&discord_connected, 500);
 }
+
+bool _state;
 
 void loop()
 {
@@ -118,6 +132,10 @@ void loop()
       wait_for_py();
     } else if (!discord_connected) {
       wait_for_discord();
+    }
+
+    if (timer_enabled) {
+      stats.updateTimer();
     }
 
     if (Serial.available()) {
@@ -133,6 +151,7 @@ void loop()
                 tft.println("\nPy script disconnected");
                 py_connected = false;
                 discord_connected = false;
+                timer_enabled = false;
 
                 mic_btn.disable();
                 head_btn.disable();
@@ -146,8 +165,13 @@ void loop()
                 head_btn.enable();
                 connected_btn.enable();
               } else {
+                if (!(discord_cursor[1] == 0)) {
+                  c.fillRect_safe(discord_cursor[0], discord_cursor[1] + 3, 156, 76, BLACK);
+                  tft.setCursor(discord_cursor[0], discord_cursor[1]);
+                }
                 tft.println("\nDiscord disconnected");
                 discord_connected = false;
+                timer_enabled = false;
 
                 mic_btn.disable();
                 head_btn.disable();
@@ -158,6 +182,15 @@ void loop()
               mic_btn.setState(buffer[2] - '0');
               head_btn.setState(buffer[3] - '0');
               connected_btn.setState(buffer[4] - '0');
+
+              _state = buffer[4] - '0';
+
+              if (_state) {
+                timer_enabled = true;
+                stats._epoch = millis();
+              } else {
+                timer_enabled = false;
+              }
               break;
             case COMMAND_VOICE_STATE_UPDATES:
               mic_btn.setState(buffer[2] - '0');
@@ -169,7 +202,15 @@ void loop()
               head_btn.setState(buffer[3] - '0');
               break;
             case COMMAND_CONNECTED:
-              connected_btn.setState(buffer[2] - '0');
+              _state = buffer[2] - '0';
+              if (_state) {
+                timer_enabled = true;
+                stats._epoch = millis();
+              } else {
+                timer_enabled = false;
+              }
+
+              connected_btn.setState(_state);
               break;
             default:
               break;

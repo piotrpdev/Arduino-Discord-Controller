@@ -22,6 +22,12 @@ CursorUtils::revert_cursor() {
   _tft->setTextColor(WHITE);
 }
 
+CursorUtils::fillRect_safe(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
+  save_cursor_pos();
+  _tft->fillRect(x, y, w, h, color);
+  revert_cursor();
+}
+
 CursorUtils::dotLoop(bool* condition, int delayAmount, bool boot = false) {
   int dot_index = 0;
 
