@@ -51,11 +51,11 @@ DiscordStats::printTime() {
 DiscordStats::updateTimer() {
   if (second_passed()) {
     _last_updated = millis();
-    clear();
+    //clear();
     _c->save_cursor_pos();
     _tft->setTextSize(3);
-    _tft->setTextColor(BLACK);
-    _tft->setCursor(5, 190);
+    _tft->setTextColor(BLACK, WHITE);
+    _tft->setCursor(7, 188);
     printTime();
     _c->revert_cursor();
   }
