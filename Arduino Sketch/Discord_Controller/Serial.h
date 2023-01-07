@@ -1,5 +1,8 @@
-#ifndef DiscordSerial_h
-#define DiscordSerial_h
+#ifndef Serial_h
+#define Serial_h
+
+#define PROTOCOL_START '<'
+#define PROTOCOL_END '>'
 
 #define COMMAND_START '#'
 

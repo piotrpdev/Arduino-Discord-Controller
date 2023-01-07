@@ -2,7 +2,8 @@
 #include <MCUFRIEND_kbv.h>
 MCUFRIEND_kbv tft;
 #include <TouchScreen.h>
-#include "DiscordSerial.h"
+#include "CursorUtils.h"
+#include "Serial.h"
 #include "DiscordButton.h"
 
 #define MINPRESSURE 200
@@ -15,21 +16,18 @@ const int TS_LEFT = 74, TS_RT = 904, TS_TOP = 105, TS_BOT = 924;
 
 TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 
-int press_cooldown = 200;
-unsigned long last_pressed = 0;
+CursorUtils c = CursorUtils(&tft);
 
 char buffer[10];
 
-bool py_connected = false;
-int saved_cursor[2];
-int not_connected_count = 0;
-char* not_connected_dots[3] = { ".", "..", "..." }; 
-
-DiscordButton mic_btn(&tft, 280, 2 + BTN_W * 0.5, 2 + 0, "MIC", COMMAND_MIC);
-DiscordButton head_btn(&tft, 280, 6 + BTN_W * 1.5, 6 + BTN_W * 1, "HEAD", COMMAND_HEAD);
-DiscordButton connected_btn(&tft, 280, 10 + BTN_W * 2.5, 10 + BTN_W * 2, "CONN", COMMAND_CONNECTED);
+DiscordButton mic_btn(&tft, &c, 280, 2 + BTN_W * 0.5, 2 + 0, "MIC", COMMAND_MIC);
+DiscordButton head_btn(&tft, &c, 280, 6 + BTN_W * 1.5, 6 + BTN_W * 1, "HEAD", COMMAND_HEAD);
+DiscordButton connected_btn(&tft, &c, 280, 10 + BTN_W * 2.5, 10 + BTN_W * 2, "CONN", COMMAND_CONNECTED);
 
 int pixel_x, pixel_y;     //Touch_getXY() updates global vars
+
+int press_cooldown = 200;
+unsigned long last_pressed = 0;
 
 bool Touch_getXY(void)
 {
@@ -65,35 +63,12 @@ void setup()
     tft.println("Serial connected");
 
     tft.println("\nInitializing buttons...");
-    save_cursor_pos();
 
     mic_btn.init();
     head_btn.init();
     connected_btn.init();
 
-    tft.setTextColor(WHITE);
-    revert_cursor_pos();
-    tft.setTextSize(1);
-    tft.println("Buttons initialized\n");
-
-    tft.setTextColor(WHITE);
-    tft.print("Waiting for py script");
-    save_cursor_pos();
-}
-
-void save_cursor_pos() {
-  saved_cursor[0] = tft.getCursorX();
-  saved_cursor[1] = tft.getCursorY();
-}
-
-void revert_cursor_pos() {
-  tft.setCursor(saved_cursor[0], saved_cursor[1]);
-}
-
-void revert_cursor() {
-  revert_cursor_pos();
-  tft.setTextSize(1);
-  tft.setTextColor(WHITE);
+    tft.println("Buttons initialized");
 }
 
 Adafruit_GFX_Button *buttons[] = {mic_btn.getBtn(), head_btn.getBtn(), connected_btn.getBtn(), NULL};
@@ -110,104 +85,91 @@ bool update_button(Adafruit_GFX_Button *b, bool down)
 
 bool update_button_list(Adafruit_GFX_Button **pb)
 {
+    c.save_cursor_pos();
     bool down = Touch_getXY();
     for (int i = 0 ; pb[i] != NULL; i++) {
         update_button(pb[i], down);
     }
+    c.revert_cursor();
     return down;
+}
+
+bool py_connected = false;
+
+void wait_for_py() {
+  tft.print("\nWaiting for py script");
+  c.save_cursor_pos();
+
+  c.dotLoop(&py_connected, 500, true);
+}
+
+bool discord_connected = false;
+
+void wait_for_discord() {
+  tft.print("\nWaiting for Discord");
+  c.save_cursor_pos();
+
+  c.dotLoop(&discord_connected, 500);
 }
 
 void loop()
 {
-    while (!py_connected) {
-      if (not_connected_count < 3) {
-        revert_cursor_pos();
-        tft.print(not_connected_dots[not_connected_count]);
-        not_connected_count++;
-      } else {
-        revert_cursor_pos();
-        tft.setTextColor(BLACK);
-        tft.print(not_connected_dots[2]);
-        tft.setTextColor(WHITE);
-        not_connected_count = 0;
-      }
-
-      if (Serial.available()) {
-        py_connected = true;
-      } else {
-        Serial.print("<#P0>");
-        delay(500);
-      }
+    if (!py_connected) {
+      wait_for_py();
+    } else if (!discord_connected) {
+      wait_for_discord();
     }
 
     if (Serial.available()) {
-      if (Serial.read() == '<') {
-        int charsRead = Serial.readBytesUntil('>', buffer, sizeof(buffer) - 1);  // Get bytes up to sentinel
+      if (Serial.read() == PROTOCOL_START) {
+        int charsRead = Serial.readBytesUntil(PROTOCOL_END, buffer, sizeof(buffer) - 1);
         
         if (buffer[0] == COMMAND_START) {
           switch (buffer[1]) {
             case COMMAND_PYTHON:
               if (buffer[2] - '0') {
                 tft.println("\nPy script connected");
-                tft.println("\nWaiting for Discord...");
               } else {
                 tft.println("\nPy script disconnected");
-                tft.print("Waiting for py script");
-                save_cursor_pos();
                 py_connected = false;
-              }
-              break;
-            case COMMAND_DISCORD:
-              if (buffer[2] - '0') {
-                tft.println("Discord connected");
-                mic_btn.enable();
-                head_btn.enable();
-                connected_btn.enable();
-              } else {
-                tft.println("\nDsicord disconnected");
-                tft.println("\nWaiting for Discord...");
-
-                save_cursor_pos();
+                discord_connected = false;
 
                 mic_btn.disable();
                 head_btn.disable();
                 connected_btn.disable();
+              }
+              break;
+            case COMMAND_DISCORD:
+              if (buffer[2] - '0') {
+                tft.println("\nDiscord connected");
+                mic_btn.enable();
+                head_btn.enable();
+                connected_btn.enable();
+              } else {
+                tft.println("\nDiscord disconnected");
+                discord_connected = false;
 
-                revert_cursor();
+                mic_btn.disable();
+                head_btn.disable();
+                connected_btn.disable();
               }
               break;
             case COMMAND_SYN:
-              save_cursor_pos();
-
               mic_btn.setState(buffer[2] - '0');
               head_btn.setState(buffer[3] - '0');
               connected_btn.setState(buffer[4] - '0');
-
-              revert_cursor();
               break;
             case COMMAND_VOICE_STATE_UPDATES:
-              save_cursor_pos();
-
               mic_btn.setState(buffer[2] - '0');
               head_btn.setState(buffer[3] - '0');
               connected_btn.setState(buffer[4] - '0');
-
-              revert_cursor();
               break;
             case COMMAND_AUDIO_TOGGLE:
-              save_cursor_pos();
-
               mic_btn.setState(buffer[2] - '0');
               head_btn.setState(buffer[3] - '0');
-
-              revert_cursor();
               break;
             case COMMAND_CONNECTED:
-              save_cursor_pos();
-
               connected_btn.setState(buffer[2] - '0');
-
-              revert_cursor();
               break;
             default:
               break;
